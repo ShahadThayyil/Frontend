@@ -11,6 +11,11 @@ import ResultExam from './pages/ResultExam'
 import Announcement from './pages/Announcments'
 import StudentExam from './pages/StudentExam'
 import StudentLogin from './pages/StudentLogin'
+import Dashboard from './pages/Dashboard'
+import LessonPlan from './pages/LessonPlan'
+import LessonPreview from './pages/LessonPreview'
+
+
 const App = () => {
   const location = useLocation();
 
@@ -19,22 +24,22 @@ const App = () => {
 
       {/* Navbar */}
       <Navbar />
-
+         
       {/* Routes */}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
+        
+
       </Routes>
 
       {/* Footer only if NOT login page */}
       {location.pathname !== "/login" && <Footer />}
-      <CreateExam />
-      <ConductExam />
-      <PreviewExam />
-      <ResultExam />
-      <Announcement />
-      <StudentExam />
-      <StudentLogin />
+   
+
+   
+       
+
 
     </div>
   );
