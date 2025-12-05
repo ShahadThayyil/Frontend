@@ -4,7 +4,13 @@ import Navbar from './components/Navbar'
 import LandingPage from './pages/LandingPage'
 import Footer from './components/Footer'
 import Login from './pages/Login'
-
+import CreateExam from './pages/CreateExam'
+import ConductExam from './pages/ConductExam'
+import PreviewExam from './pages/PreviewExam'
+import ResultExam from './pages/ResultExam'
+import Announcement from './pages/Announcments'
+import StudentExam from './pages/StudentExam'
+import StudentLogin from './pages/StudentLogin'
 const App = () => {
   const location = useLocation();
 
@@ -22,6 +28,13 @@ const App = () => {
 
       {/* Footer only if NOT login page */}
       {location.pathname !== "/login" && <Footer />}
+      <CreateExam />
+      <ConductExam />
+      <PreviewExam />
+      <ResultExam />
+      <Announcement />
+      <StudentExam />
+      <StudentLogin />
 
     </div>
   );
