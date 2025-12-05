@@ -59,69 +59,87 @@ const CreateExam = () => {
     }
   };
 
-  // --- MOCK GENERATION ---
-  const handleGenerate = (e) => {
-    e.preventDefault();
-    setIsGenerating(true);
+  // --- API BASE URL ---
+const API_URL = "http://10.160.195.175:5678/webhook/exam/generate-ai";
 
-    setTimeout(() => {
-      setIsGenerating(false);
-      
-      let questions = [];
-      let totalMarks = 0;
+// --- API BASE URL ---
 
-      if (examMode === 'mcq') {
-        // --- MODE 1: MCQ ONLY ---
-        questions = Array.from({ length: formData.totalMcqOnly }).map((_, i) => ({
-          id: i, type: 'MCQ', marks: 1,
-          question: `Generated MCQ Question ${i+1} based on ${formData.topic}?`,
-          options: ['Option A', 'Option B', 'Option C', 'Option D']
-        }));
-        totalMarks = formData.totalMcqOnly;
+const handleGenerate = async (e) => {
+  e.preventDefault();
+  setIsGenerating(true);
 
-      } else {
-        // --- MODE 2: NORMAL EXAM (Updated for 3 & 7 Marks) ---
-        
-        // 1. Add MCQs (1 Mark)
-        if (formData.normalMcqCount > 0) {
-            questions.push(...Array.from({ length: formData.normalMcqCount }).map((_, i) => ({
-              id: `mcq-${i}`, type: 'MCQ', marks: 1,
-              question: `Mixed MCQ Question ${i+1} about ${formData.topic}?`,
-              options: ['A', 'B', 'C', 'D']
-            })));
-            totalMarks += parseInt(formData.normalMcqCount);
-        }
+  try {
+    // Build counts based on exam mode
+    let counts;
 
-        // 2. Add 3 Mark Theory (Short Answer)
-        if (formData.q3Count > 0) {
-          questions.push(...Array.from({ length: formData.q3Count }).map((_, i) => ({
-            id: `3m-${i}`, type: '3 Marks', marks: 3,
-            question: `Briefly explain the concept of ${formData.topic} part ${i+1}?`
-          })));
-          totalMarks += (parseInt(formData.q3Count) * 3);
-        }
-
-        // 3. Add 7 Mark Theory (Long Answer/Essay)
-        if (formData.q7Count > 0) {
-          questions.push(...Array.from({ length: formData.q7Count }).map((_, i) => ({
-            id: `7m-${i}`, type: '7 Marks', marks: 7,
-            question: `Write a detailed essay regarding ${formData.topic} covering aspect ${i+1}. Include examples.`
-          })));
-          totalMarks += (parseInt(formData.q7Count) * 7);
-        }
-      }
-
-      const finalExamData = {
-        title: formData.topic || "Generated Exam",
-        totalMarks,
-        questions,
-        difficulty: formData.difficulty
+    if (examMode === "mcq") {
+      // MCQ-only mode
+      counts = {
+        mcq: formData.totalMcqOnly,
+        three_mark: 0,
+        one_mark: 0
       };
+    } else {
+      // Normal mode
+      counts = {
+        mcq: formData.normalMcqCount,
+        three_mark: formData.q3Count,
+        one_mark: formData.q7Count   // backend expects this naming
+      };
+    }
 
-      navigate('/preview-exam', { state: { examData: finalExamData } });
+    // PDF URL or null
+    const syllabusUrl = formData.file 
+      ? formData.file.url || null   // You can update this if uploading 🚀
+      : formData.syllabusText || null;
 
-    }, 2000);
-  };
+    // Build final payload
+    const payload = {
+      topic: formData.topic,
+      teacher_id: 1,
+      class_id: 1,
+      difficulty: formData.difficulty.toLowerCase(),
+      counts,
+      syllabus_url: syllabusUrl
+    };
+
+    console.log("Sending request payload:", payload);
+
+    // --- SEND POST REQUEST TO YOUR BACKEND ---
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    console.log("AI Exam Response:", data);
+
+    // 👇 Extract exam_id from backend response
+    const examId = data.exam_id;
+
+    // 👇 Persist exam_id in localStorage
+    localStorage.setItem("exam_id", examId);
+
+    setIsGenerating(false);
+
+    // Navigate with AI-generated exam + exam_id
+    navigate("/preview-exam", { 
+      state: { 
+        examData: data,
+        examId 
+      }
+    });
+
+  } catch (err) {
+    setIsGenerating(false);
+    console.error("Error generating exam:", err);
+    alert("Failed to generate the exam. Check console for details.");
+  }
+};
+
+
 
   return (
     <div className="min-h-screen bg-slate-50 pt-12 pb-12 px-4 sm:px-6 lg:px-8 font-sans text-slate-800">

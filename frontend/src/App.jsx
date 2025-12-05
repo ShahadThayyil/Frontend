@@ -14,6 +14,7 @@ import StudentExam from './pages/StudentExam'
 import StudentLogin from './pages/StudentLogin'
 import LessonPlan from './pages/LessonPlan'
 import LessonPreview from './pages/LessonPreview'
+import ResultPage from './pages/ResultPage'
 
 const App = () => {
   const location = useLocation();
@@ -29,18 +30,20 @@ const App = () => {
 
       {/* Routes */}
       <Routes>
+        <Route path="/conduct-exam/:examId" element={<ConductExam/>} />
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/create-exam" element={<CreateExam />} />
-        <Route path="/conduct-exam" element={<ConductExam />} />
         <Route path="/preview-exam" element={<PreviewExam />} />
         <Route path="/result-exam" element={<ResultExam />} />
         <Route path="/dashboard/announcements" element={<Announcement />} />
         <Route path="/student-exam" element={<StudentExam />} />
         <Route path="/student-login" element={<StudentLogin />} />
         <Route path="/dashboard/lesson-plan" element={<LessonPlan />} />
-        <Route path="/lesson-preview" element={<LessonPreview />} />
+        <Route path="/dashboard/lesson-plan/preview/:id" element={<LessonPreview />} />
+        <Route path="/exam/:examId/student/:studentId/result" element={<ResultPage />} />
+        <Route path="*" element={<div className="p-6">Page Not Found</div>} />
       </Routes>
 
       {/* Show Footer only on home page */}

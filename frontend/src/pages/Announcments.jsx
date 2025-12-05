@@ -4,48 +4,55 @@ import {
   Megaphone, Wand2, Send, Copy, 
   CheckCircle, MessageCircle, Sparkles, 
   AlignLeft, AlertCircle, Smile,
-  ChevronLeft // Imported for the back button
+  ChevronLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Announcement = () => {
-  const navigate = useNavigate(); // Navigation hook
+  const navigate = useNavigate();
   const [rawText, setRawText] = useState('');
   const [generatedText, setGeneratedText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const [tone, setTone] = useState('Professional'); // Professional, Urgent, Friendly
+  const [tone, setTone] = useState('Professional');
 
-  // --- MOCK AI GENERATION ---
-  const handleGenerate = (e) => {
-    e.preventDefault();
-    if (!rawText.trim()) return;
-    
-    setIsGenerating(true);
-    setGeneratedText(''); // Clear previous result
+  // --- SEND REQUEST TO SERVER ---
+  const handleGenerate = async (e) => {
+  e.preventDefault();
+  if (!rawText.trim()) return;
 
-    // Simulate AI Latency
-    setTimeout(() => {
-      setIsGenerating(false);
-      
-      // Mock Logic to "Formalize" text
-      const mockResult = `📢 *IMPORTANT ANNOUNCEMENT*
+  setIsGenerating(true);
+  setGeneratedText('');
 
-Dear Students & Parents,
+  try {
+    const response = await fetch(
+      "http://10.160.195.175:5678/webhook/announcements/format",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          prompt: `${rawText} [${tone}]`
+        })
+      }
+    );
 
-This is to formally inform you regarding: "${rawText.substring(0, 20)}...". 
+    const data = await response.json();
+    if (data?.output) {
+      setGeneratedText(data.output);
+    } else {
+      setGeneratedText("⚠️ Error: Server did not return formatted text.");
+    }
 
-${tone === 'Urgent' ? '⚠️ PLEASE NOTE:' : ''} 
-We would like to bring to your attention that ${rawText}. Please make necessary arrangements accordingly.
+  } catch (error) {
+    console.error(error);
+    setGeneratedText("⚠️ Error: Unable to reach formatting server.");
+  }
 
-${tone === 'Friendly' ? 'We appreciate your continued cooperation! 🌟' : 'Thank you for your attention to this matter.'}
+  setIsGenerating(false);
+};
 
-Regards,
-Class Teacher`;
-      
-      setGeneratedText(mockResult);
-    }, 2000);
-  };
 
   // --- ACTIONS ---
   const handleCopy = () => {
@@ -55,7 +62,6 @@ Class Teacher`;
   };
 
   const handleWhatsApp = () => {
-    // URL Encode the message for WhatsApp
     const url = `https://web.whatsapp.com/send?text=${encodeURIComponent(generatedText)}`;
     window.open(url, '_blank');
   };
@@ -63,10 +69,9 @@ Class Teacher`;
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col text-slate-800">
       
-      {/* Background Pattern */}
       <div className="fixed inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px]" />
 
-      {/* --- Header (With Back Button) --- */}
+      {/* HEADER */}
       <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-10 sticky top-0 z-20">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
@@ -87,25 +92,24 @@ Class Teacher`;
         </button>
       </header>
 
-      {/* --- Main Content --- */}
+      {/* MAIN */}
       <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
           
-          {/* ================= LEFT: INPUT AREA ================= */}
+          {/* LEFT SIDE */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col h-full space-y-6"
           >
-            {/* Intro Text */}
             <div className="lg:pt-4">
               <h2 className="text-2xl font-bold text-slate-900 mb-2">Draft your message</h2>
-              <p className="text-slate-500">Turn your rough notes into professional notices instantly. Choose a tone and let AI handle the formatting.</p>
+              <p className="text-slate-500">Turn your rough notes into professional notices instantly. Choose a tone and let the server handle the formatting.</p>
             </div>
 
             <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl p-6 shadow-lg flex-1 flex flex-col">
               
-              {/* Tone Selector */}
+              {/* TONE SELECTOR */}
               <div className="flex gap-2 mb-4 p-1 bg-slate-100 rounded-xl w-fit">
                 {['Professional', 'Urgent', 'Friendly'].map((t) => (
                   <button
@@ -125,7 +129,7 @@ Class Teacher`;
                 ))}
               </div>
 
-              {/* Text Area */}
+              {/* TEXT INPUT */}
               <div className="relative flex-1">
                 <textarea
                   value={rawText}
@@ -138,18 +142,18 @@ Class Teacher`;
                 </div>
               </div>
 
-              {/* Generate Button */}
+              {/* GENERATE BUTTON */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleGenerate}
                 disabled={isGenerating || !rawText}
-                className="mt-6 w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg shadow-xl hover:shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden relative group"
+                className="mt-6 w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg shadow-xl hover:shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed relative group"
               >
                 {isGenerating ? (
                   <>
                     <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Polishing Text...
+                    Formatting...
                   </>
                 ) : (
                   <>
@@ -157,8 +161,7 @@ Class Teacher`;
                     Generate Formal Message
                   </>
                 )}
-                
-                {/* Shine Effect */}
+
                 {!isGenerating && (
                   <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent z-10" />
                 )}
@@ -167,12 +170,10 @@ Class Teacher`;
             </div>
           </motion.div>
 
-
-          {/* ================= RIGHT: PREVIEW AREA ================= */}
-          <div className="flex flex-col h-full justify-end pb-0 lg:pb-0">
+          {/* RIGHT SIDE */}
+          <div className="flex flex-col h-full justify-end">
             <AnimatePresence mode="wait">
               {!generatedText ? (
-                // Empty State
                 <motion.div 
                   key="empty"
                   initial={{ opacity: 0 }}
@@ -185,11 +186,10 @@ Class Teacher`;
                   </div>
                   <h3 className="text-xl font-bold text-slate-400">Waiting for Input</h3>
                   <p className="text-slate-400 max-w-xs mt-2 text-sm">
-                    Type your rough message on the left and let AI transform it into a formal notice.
+                    Type your rough message on the left and the server will transform it into a formal announcement.
                   </p>
                 </motion.div>
               ) : (
-                // Generated Result
                 <motion.div 
                   key="result"
                   initial={{ opacity: 0, x: 20 }}
@@ -198,25 +198,25 @@ Class Teacher`;
                 >
                   <div className="bg-white border border-slate-200 rounded-3xl shadow-xl flex-1 flex flex-col overflow-hidden">
                     
-                    {/* Header */}
+                    {/* HEADER */}
                     <div className="bg-slate-900 p-4 px-6 flex justify-between items-center text-white">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                        <span className="font-bold text-sm tracking-wide">AI PREVIEW</span>
+                        <span className="font-bold text-sm tracking-wide">SERVER PREVIEW</span>
                       </div>
                       <span className="text-xs font-mono text-slate-400 bg-slate-800 px-2 py-1 rounded">
                         {tone.toUpperCase()} MODE
                       </span>
                     </div>
 
-                    {/* Message Content */}
+                    {/* CONTENT */}
                     <div className="p-8 bg-slate-50/50 flex-1">
                       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-slate-800 leading-relaxed whitespace-pre-wrap font-medium">
                         {generatedText}
                       </div>
                     </div>
 
-                    {/* Actions Footer */}
+                    {/* ACTIONS */}
                     <div className="p-6 bg-white border-t border-slate-100 flex flex-col gap-3">
                       
                       <button 
